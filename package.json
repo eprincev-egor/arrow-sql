@@ -1,0 +1,23 @@
+{
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "mocha ./tests/**/*-spec.js",
+    "lint": "eslint ./lib/**/*.js && eslint ./tests/**/*.js",
+    "coverage": "nyc npm run test"
+  },
+  "author": "Eprincev Egor",
+  "license": "ISC",
+  "dependencies": {
+    "lang-coach": "^1.1.9",
+    "model-layer": "^1.4.3",
+    "nyc": "^14.1.1"
+  },
+  "devDependencies": {
+    "eslint": "^5.13.0",
+    "mocha": "^5.2.0"
+  },
+  "directories": {
+    "lib": "lib",
+    "test": "tests"
+  }
+}
