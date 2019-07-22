@@ -3,16 +3,37 @@
 const JSQueryCoach = require("../../lib/JSQueryCoach");
 const assert = require("assert");
 
-function testExpression2sql({expression, sql, variables, tableName}) {
-    let coach = new JSQueryCoach(expression);
-    expression = coach.parseExpression();
+function testExpression2sql({expression, sql, error, variables, tableName}) {
+    
+    if ( error ) {
+        // RegExp
+        let messagePattern = error;
 
-    let resultSql = expression.toSQL({
-        tableName,
-        values: variables || {}
-    });
-
-    assert.deepStrictEqual(resultSql, sql);
+        assert.throws(
+            () => {
+                let coach = new JSQueryCoach(expression);
+                expression = coach.parseExpression();
+            
+                expression.toSQL({
+                    tableName,
+                    values: variables || {}
+                });
+            },
+            resultError =>
+                messagePattern.test( resultError )
+        );
+    }
+    else {
+        let coach = new JSQueryCoach(expression);
+        expression = coach.parseExpression();
+    
+        let resultSql = expression.toSQL({
+            tableName,
+            values: variables || {}
+        });
+    
+        assert.deepStrictEqual(resultSql, sql);
+    }
 }
 
 describe("Expression", () => {
@@ -324,6 +345,52 @@ describe("Expression", () => {
 
     });
 
+    it("execute js code at near variables", () => {
+
+        testExpression2sql({
+            tableName: "Order",
+            expression: "Order.Client.id == clientModel.id",
+            variables: {
+                clientModel: {
+                    id: 102
+                }
+            },
+            sql: [
+                { column: ["Order", "Client", "id"] },
+                { operator: "=" },
+                { literal: 102 }
+            ]
+        });
+
+        testExpression2sql({
+            tableName: "Order",
+            expression: "first.value + second.value",
+            variables: {
+                first: {
+                    value: 1
+                },
+                second: {
+                    value: 2
+                }
+            },
+            sql: [
+                { literal: 1 },
+                { operator: "+" },
+                { literal: 2 }
+            ]
+        });
+
+        testExpression2sql({
+            tableName: "Order",
+            expression: "myVar.undef.prop",
+            variables: {
+                myVar: {}
+            },
+            error: /Cannot read property 'prop' of undefined/
+        });
+
+    });
+
     it("sub expression", () => {
         testExpression2sql({
             expression: "(1 + 2) * (2 - 3)",
@@ -376,7 +443,7 @@ describe("Expression", () => {
         });
     });
     
-    it("expression in values", () => {
+    it("expression `in` values", () => {
 
         testExpression2sql({
             tableName: "Order",
@@ -414,6 +481,38 @@ describe("Expression", () => {
                 { column: ["Order", "typeId"] },
                 { operator: "=" },
                 { literal: 3 }
+            ]
+        });
+
+    });
+
+    it("call Math functions", () => {
+
+        // Math.round
+        testExpression2sql({
+            tableName: "Order",
+            expression: "Math.round( 1.5 )",
+            variables: {
+            },
+            sql: [
+                { call: "round(" },
+                { literal: 1.5 },
+                { call: ")" }
+            ]
+        });
+
+        // Math.max
+        testExpression2sql({
+            tableName: "Order",
+            expression: "Math.max( Order.profit, 100 )",
+            variables: {
+            },
+            sql: [
+                { call: "greatest(" },
+                { column: ["Order", "profit"] },
+                { operator: "," },
+                { literal: 100 },
+                { call: ")" }
             ]
         });
 
