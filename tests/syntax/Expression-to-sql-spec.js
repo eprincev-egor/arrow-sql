@@ -501,6 +501,32 @@ describe("Expression", () => {
             ]
         });
 
+        // Math.ceil
+        testExpression2sql({
+            tableName: "Order",
+            expression: "Math.ceil( 1.5 )",
+            variables: {
+            },
+            sql: [
+                { call: "ceil(" },
+                { literal: 1.5 },
+                { call: ")" }
+            ]
+        });
+
+        // Math.floor
+        testExpression2sql({
+            tableName: "Order",
+            expression: "Math.floor( 1.5 )",
+            variables: {
+            },
+            sql: [
+                { call: "floor(" },
+                { literal: 1.5 },
+                { call: ")" }
+            ]
+        });
+
         // Math.max
         testExpression2sql({
             tableName: "Order",
@@ -512,6 +538,21 @@ describe("Expression", () => {
                 { column: ["Order", "profit"] },
                 { operator: "," },
                 { literal: 100 },
+                { call: ")" }
+            ]
+        });
+
+        // Math.min
+        testExpression2sql({
+            tableName: "Order",
+            expression: "Math.min( Order.profit, 1000 )",
+            variables: {
+            },
+            sql: [
+                { call: "least(" },
+                { column: ["Order", "profit"] },
+                { operator: "," },
+                { literal: 1000 },
                 { call: ")" }
             ]
         });
